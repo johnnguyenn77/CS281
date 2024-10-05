@@ -1,0 +1,19 @@
+HW1
+1.
+a. 
+and s1, s2, s3  # s1 = s2 AND s3
+not s1, s1      # s1 = NOT s1
+b.
+or s1, s2, s3   # s1 = s2 OR s3
+not s1, s1      # s1 = NOT s1
+2. 
+Principles: RISC-V follows a load/store architecture, meaning all operations are performed on registers, and memory is accessed only through explicit load and store instructions.
+
+Trade-offs:
+	- Pros: Simplifies the instruction set, leading to easier decoding and potentially faster execution. It also allows for more efficient pipelining and parallelism.
+	- Cons: Can increase the number of instructions needed for certain tasks, potentially leading to larger code size and more memory accesses.
+
+3. 
+- Open standard: RISC-V is open-source, which means there are no licensing fees. This reduces costs and encourages innovation, allowing custom modifications to the ISA to fit specific needs.
+- Simplicity and modularity: The RISC-V instruction set is designed to be simple and modular, which makes it easier to implement in hardware
+- Customizability: RISC-V’s extensibility allows you to add or remove features as needed, optimizing for power consumption, performance, or size, making it highly suitable for the specific constraints of IoT devices.
