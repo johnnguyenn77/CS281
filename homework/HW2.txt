@@ -1,0 +1,25 @@
+HW2
+
+1. To prevent security vulnerabilities. Allowing direct PC modification could lead to unsafe jumps or exploits. Instead, jal and jr ensure controlled jumps and returns, reducing the risk of attacks on the system’s control flow.
+
+2. Assembler tooling helps by using pseudoinstructions, which are easier-to-read commands that expand into actual machine instructions. This improves program readability without increasing the instruction set, making the code clearer and reducing bugs.
+
+3. 
+- The "jal" instruction contains the opcode, rd, offset/immediate value. (data card)
+
+- The offset value is 20-bit long. And to get the target address, the 20-bit offset first shifted left by 1 bit (multiply by 2) and then sign extended. and then added to the address at the jump instruction (PC).
+
+- The 20-bit offset values maximum range is 1111 1111 1111 1111 1111(FFFFF), that is the offset address possible are in the range -FFFFF to FFFFE
+
+- Then add FFFFE to PC(0x20000000)= 0x200FFFFE and subtract FFFFF from PC= 0x1FF00001
+
+=> The range of possible values is from 0x1FF00001 to 0x200FFFFE.
+
+4. 
+- The "beq" instruction contains the offset filed has 12 bit.
+
+- Hence the 12-bit value maximum range is 1111 1111 1111 (FFF), that is the offset address possible are in the range -FFF to FFE.
+
+- Then add FFE to PC =0x20000FFE and subtract FFF from PC=0x1FFFF001.
+
+=> The range of possible values is from 0x20000FFE to 0x1FFFF001.
