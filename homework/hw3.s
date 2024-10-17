@@ -6,66 +6,117 @@
     .equ sz_A, 10
 
 .text
-    .globl main # assembly directive that makes the symbol main
-                # global and this is where execution starts
+    .globl main # Assembly directive that makes the symbol main global
 
 main:
-    #its a good practice to setup the arguments prior to making
-    #a function call, sometimes this is not necessary but it is
-    #a good habit to get into.
-    la a0, A # s0 = &A[0]
-    li a1, sz_A # s1 = sz_A
+    # Load the array A and size into registers, then call print_array
+    la a0, A # a0 = &A[0]
+    li a1, sz_A # a1 = sz_A
     jal print_array
 
-    la a0, A # s0 = &A[0]
-    li a1, sz_A # s1 = sz_A
+    # Call reverse to reverse the array
+    la a0, A # a0 = &A[0]
+    li a1, sz_A # a1 = sz_A
     jal reverse
 
-    la a0, A # s0 = &A[0
-    li a1, sz_A # s1 = sz_A
+    # Print the reversed array
+    la a0, A # a0 = &A[0]
+    li a1, sz_A # a1 = sz_A
     jal print_array
+
     ret
 
-# This is the reverse function...
-# Reverse (a0 = &A[0], a1 = sz_A)
-# After the call to reverse, the array A will be reversed
+# Reverse function (a0 = &A[0], a1 = sz_A)
 reverse:
-    #make sure you setup a stack frame, this is a non leaf function
-    #thus you will need to at the minimum save ra, you can add
-    #more registers to save if you need to
-    addi sp, sp #FINISH THIS LINE - should be the first line of code
+    # Set up stack frame
+    addi sp, sp, -4 # Reserve space on stack
+    sw ra, 0(sp) # Save return address
 
-    #setup an manage a loop to reverse the array. Use the loop
-    #to iterate over the array, however use a helper function called
-    #swap to handle the actual swapping of elements in the reversal
-    #process. Make sure you you properly clean up the stack before
-    #returning...
+    # i = 0, j = sz_A - 1
+    li t0, 0 # t0 = i
+    mv t1, a1 # t1 = sz_A
+    addi t1, t1, -1 # t1 = j = sz_A - 1
 
-    #dont forget to use the swap function aka jal swap in your solution
+reverse_loop:
+    # Check if i >= j
+    bge t0, t1, reverse_done
 
-    #restore the ra register, do appropriate cleanup, restore the
-    #stack and return
-    lw ra, #FINISH THIS LINE
-    addi sp, sp #FINISH THIS LINE
-    jr ra #Go back to main
+    # Swap elements A[i] and A[j]
+    mv a1, t0 # a1 = i
+    mv a2, t1 # a2 = j
+    jal swap
 
-# This is the swap function...
-# swap (a0 = &A[0], a1 = i, a2 = j)
-# After the call to swap, the elements at A[i] and A[j] will be swapped
+    # Increment i, decrement j
+    addi t0, t0, 1 # i++
+    addi t1, t1, -1 # j--
+
+    # Loop back
+    j reverse_loop
+
+reverse_done:
+    # Restore stack and return
+    lw ra, 0(sp) # Restore return address
+    addi sp, sp, 4 # Free space on stack
+    jr ra # Return to caller
+
+# Swap function (a0 = &A[0], a1 = i, a2 = j)
 swap:
-    #Implement this function, you should be able to do this as a leaf function
+    # Calculate addresses of A[i] and A[j]
+    slli a1, a1, 2 # a1 = i * 4 (word size)
+    slli a2, a2, 2 # a2 = j * 4 (word size)
+    add a1, a0, a1 # a1 = &A[i]
+    add a2, a0, a2 # a2 = &A[j]
 
-    jr ra #return to reverse
+    # Load A[i] and A[j] into temporary registers
+    lw t2, 0(a1) # t2 = A[i]
+    lw t3, 0(a2) # t3 = A[j]
+
+    # Swap the values
+    sw t2, 0(a2) # A[j] = A[i]
+    sw t3, 0(a1) # A[i] = A[j]
+
+    jr ra # Return to caller
 
     ret
 
-# This is the print_array function...
-# print_arrray(a0 = &A[0], a1 = sz_A)
-# This function should print the array. Use a space
-# between printing out each element and print a newline
-# at the end (after the elements have printed).
+# Print array function (a0 = &A[0], a1 = sz_A)
 print_array:
-    #Implement this function, you should be able to do this
-    #as a leaf function. See lab2 for examples of how
-    #to print out strings and integers
-    jr ra #return to main
+    # Save the array's base address (a0) into t4
+    mv t4, a0 # t4 = &A[0]
+
+    # Save sz_A into t3 to preserve it
+    mv t3, a1 # t3 = sz_A
+
+    # Loop over the array and print each element
+    li t0, 0 # t0 = index i = 0
+
+print_loop:
+    # Check if i >= sz_A (using t3 for sz_A)
+    bge t0, t3, print_done
+
+    # Calculate address of A[i] using t4 instead of s0
+    slli t1, t0, 2 # t1 = i * 4 (word size)
+    add t1, t4, t1 # t1 = &A[i]
+
+    # Load A[i] and print it
+    lw t2, 0(t1) # t2 = A[i]
+    mv a1, t2 # a1 = A[i]
+    li a0, 1 # syscall for print integer
+    ecall
+
+    # Print space after the number
+    la a1, space # a1 = address of space
+    li a0, 4 # syscall for print string
+    ecall
+
+    # Increment i and loop
+    addi t0, t0, 1 # i++
+    j print_loop
+
+print_done:
+    # Print newline at the end
+    la a1, newline # a1 = address of newline
+    li a0, 4 # syscall for print string
+    ecall
+
+    jr ra # Return to caller
