@@ -44,7 +44,7 @@ loop:
     li a0, 0x122
     ecall
     mv a1, s0
-    jal adjust_counter   #adjust_counter(button_state, current_counter)
+    jal adjust_counter #adjust_counter(button_state, current_counter)
     mv s0, a0
 j loop
 
@@ -111,35 +111,50 @@ exit_adj_counter:
 
 #This function writes the counter value passed in register a0 to the LCD
 write_lcd:
-    #setup stack, again you can change this if you want.
+    # Setup stack, again you can change this if you want.
     addi sp, sp, -4
     sw ra, 0(sp)
 
-    jal extract_bcd #a0 = 10's place, a1 = 1's place
-    jal encode_digit #a0 = encoded for 7 segment display
-    mv a1,a0    #a1 = argument for 7 seg display update
+    # Write the code to update the LCD here.
+    jal extract_bcd # Extract BCD for 10's and 1's place
+    jal encode_digit # Encode digit for 7-segment display
+    mv a1, a0 # Save encoded digit to a1 for 7-segment display
 
-    #now get the mask
+    # Now get the mask for the 7-segment display
     la t0, digit_msk
     lw a2, 0(t0)
 
-    li a0, 0x120
+    li a0, 0x120 # System call to update the 7-segment display
     ecall
 
     # Check if the current counter value is odd or even
-    mv t0, s0             # Move the current counter value (s0) to t0
-    andi t1, t0, 1        # Check the least significant bit (LSB)
+    mv t0, s0 # Move the current counter value (s0) to t0
+    andi t1, t0, 1 # Check the least significant bit (LSB)
 
-    beq t1, zero, set_green_led   # If LSB == 0, the number is even (jump to set green LED)
+    beq t1, zero, check_power_of_two # If LSB == 0, check if the number is a power of 2
     # If the number is odd (LSB == 1), turn on the red LED
     li a0, 0x121
-    li a1, 0b10           # Red LED on, green LED off (0b10)
+    li a1, 0b10 # Red LED on, green LED off (0b10)
     ecall
     j done_led_control
-set_green_led:
-    # If the number is even, turn on the green LED
+
+check_power_of_two:
+    # Check if the number is a power of 2
+    beqz t0, set_green_led # If the number is 0, jump to set only green LED
+    addi t1, t0, -1 # t1 = t0 - 1
+    and t2, t0, t1 # t2 = t0 & (t0 - 1)
+    bnez t2, set_green_led # If t2 != 0, it's not a power of 2, jump to set green LED
+
+    # If t2 == 0, it's a power of 2, turn on both LEDs
     li a0, 0x121
-    li a1, 0b01           # Green LED on, red LED off (0b01)
+    li a1, 0b11 # Both LEDs on (0b11)
+    ecall
+    j done_led_control
+
+set_green_led:
+    # If the number is even and not a power of 2, turn on the green LED
+    li a0, 0x121
+    li a1, 0b01 # Green LED on, red LED off (0b01)
     ecall
 
 done_led_control:
