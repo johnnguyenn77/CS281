@@ -2,7 +2,7 @@
 .data
                    #76543210
     digits: .word 0b00111111,   # 0
-            .word 0b00000110,   # 1   
+            .word 0b00000110,   # 1
             .word 0b01011011,   # 2
             .word 0b01001111,   # 3
             .word 0b01100110,   # 4
@@ -11,20 +11,20 @@
             .word 0b00000111,   # 7
             .word 0b01111111,   # 8
             .word 0b01100111    # 9
-     digit_msk : .word 0b111111111111111
-     digit_max : .word 100
-     digits_sz : .word 10
+    digit_msk : .word 0b111111111111111
+    digit_max : .word 100
+    digits_sz : .word 10
 
-.text   
+.text
 # some useful constants that you might want to use in your program to improve
-#readability    
+#readability
 .equ LEFT_PRESS, 0b10
 .equ RIGHT_PRESS, 0b01
 .equ NO_PRESS, 0b00
 
 .equ MIN_VAL, 0
-.equ MAX_VAL, 99    
-	.globl  main 
+.equ MAX_VAL, 99
+	.globl  main
 
 main:
 
@@ -47,14 +47,14 @@ loop:
     jal adjust_counter   #adjust_counter(button_state, current_counter)
     mv s0, a0
 j loop
-  
+
     ret #you will never get here but its god practice
 
-#this function accepts the state of the buttons in a0, and the current counter 
-#value in a1 and will adjust it based on the button press state.  
+#this function accepts the state of the buttons in a0, and the current counter
+#value in a1 and will adjust it based on the button press state.
 adjust_counter:
 
-``` #you can change this, but in my implmentation I saved s0 and ra on the stack
+#you can change this, but in my implmentation I saved s0 and ra on the stack
     addi sp, sp, -8
     sw s0, 4(sp)
     sw ra, 0(sp)
@@ -74,24 +74,34 @@ adjust_counter:
         #to take into account the edge condition where the counter is at 0. There
         #is a MIN_VAL constnt that you can use.  If the counter is at 0, do not
         #decrement it, but instead jump to error_counter. If its not at zero decrement
-        #the counter and use write_lcd to update the display. 
+        #the counter and use write_lcd to update the display.
+        li t1, MIN_VAL    # Load MIN_VAL (0)
+        beq s0, t1, err_counter  # If current counter is MIN_VAL, jump to error
+        addi s0, s0, -1   # Decrement the counter
+        mv a0, s0         # Pass updated counter to write_lcd
         jal write_lcd
         j exit_adj_counter
 
     inc_counter:
         #TODO - do the same thing for incrementing the counter.  This time you will
         #need to check if the counter is at the MAX_VAL.
+        li t1, MAX_VAL    # Load MAX_VAL (99)
+        beq s0, t1, err_counter  # If current counter is MAX_VAL, jump to error
+        addi s0, s0, 1    # Increment the counter
+        mv a0, s0         # Pass updated counter to write_lcd
         jal write_lcd
         j exit_adj_counter
-    
+
 
     err_counter:
-        # if we get an error, like at teh boundry condition, flash the LEDs twice. 
+        # if we get an error, like at teh boundry condition, flash the LEDs twice.
         # remember we have a sample program that shows how to do this
+        li a0, 5 # Select how many times the led will flash
         jal flash_led
+        j exit_adj_counter
 
 #we are done restore the stack properly and return the next counter state in
-#register a0   
+#register a0
 exit_adj_counter:
     mv a0, s0
     lw ra, 0(sp)
@@ -101,28 +111,125 @@ exit_adj_counter:
 
 #This function writes the counter value passed in register a0 to the LCD
 write_lcd:
-    #setup stack, again you can change this if you want. 
+    #setup stack, again you can change this if you want.
     addi sp, sp, -4
     sw ra, 0(sp)
 
-    #write the code to update the LCD here. Use the count_to_100 sample as
-    #guidence
+    jal extract_bcd #a0 = 10's place, a1 = 1's place
+    jal encode_digit #a0 = encoded for 7 segment display
+    mv a1,a0    #a1 = argument for 7 seg display update
 
-    #restore the stack
+    #now get the mask
+    la t0, digit_msk
+    lw a2, 0(t0)
+
+    li a0, 0x120
+    ecall
+
+    # Check if the current counter value is odd or even
+    mv t0, s0             # Move the current counter value (s0) to t0
+    andi t1, t0, 1        # Check the least significant bit (LSB)
+
+    beq t1, zero, set_green_led   # If LSB == 0, the number is even (jump to set green LED)
+    # If the number is odd (LSB == 1), turn on the red LED
+    li a0, 0x121
+    li a1, 0b10           # Red LED on, green LED off (0b10)
+    ecall
+    j done_led_control
+set_green_led:
+    # If the number is even, turn on the green LED
+    li a0, 0x121
+    li a1, 0b01           # Green LED on, red LED off (0b01)
+    ecall
+
+done_led_control:
+    # Restore the stack
     lw ra, 0(sp)
     addi sp, sp, 4
     ret
 
 #TODO - to implement write_lcd you might want to consider adding a few functions
 #here as helpers to keep your code clean.
+extract_bcd:
+    # Load the input number from a0
+    mv t0, a0           # t0 = input number
 
+    # Extract the 10's place by dividing by 10
+    li t1, 10           # t1 = 10
+    div t2, t0, t1      # t2 = t0 / 10 (10's place)
+    rem t3, t0, t1      # t3 = t0 % 10 (1's place)
+
+    # Store the results in a0 and a1
+    mv a0, t2           # a0 = 10's place
+    mv a1, t3           # a1 = 1's place
+
+    # Return from the function
+    ret
+
+encode_digit:
+    # Load the input 10s place from a0
+
+    # Calculate the address of the digit table
+    la t0, digits       # t1 = &digits[0]
+
+    # Calculate the offset for the digit table
+    slli a0, a0, 2      # Table offset for 10's place
+    slli a1, a1, 2      # Table offset for 1's place
+
+    add t1, t0, a0      # address of 10's place digit
+    add t2, t0, a1      # address of 1's place digit
+    lw a0, 0(t1)        # a0 = 10's place digit
+    lw a1, 0(t2)        # a1 = 1's place digit
+
+    # Combine the 10's and 1's place digits
+    slli a0, a0, 8      # Shift 10's place to the left
+    or a0, a0, a1       # Combine 10's and 1's place
+
+    #a0 now has the bitfield for the seven segment display
+    # [ digit 10's place ][ digit 1's place ]
+    ret
 
 flash_led:
-   #see the sample code for this function 
-   ret
+    #see the sample code for this function
+    addi sp, sp, -12
+    sw ra, 0(sp)
+    sw s0, 4(sp)
+    sw s1, 8(sp)
+
+    li s0, 0
+    mv s1, a0 #flash the number in a0
+flash_loop:
+    beq s0, s1, flash_done
+    addi s0, s0, 1 #update counter
+
+    #turn on both LEDs
+    li a0, 0x121
+    li a1, 0b11
+    ecall
+    #wait a little
+    li a0, 250
+    jal sleep
+
+    #turn off both LEDs
+    li a0, 0x121
+    li a1, 0b00
+    ecall
+
+    #wait a little
+    li a0, 250
+    jal sleep
+
+    j flash_loop
+
+flash_done:
+    lw ra, 0(sp)
+    lw s0, 4(sp)
+    lw s1, 8(sp)
+    addi sp, sp, 12
+ret
 
 #you might find it helpful to include the sleep helper I have been using
-#in my sample code. 
+#in my sample code.
 sleep:
     mv t0, a0
     sleep_loop:
