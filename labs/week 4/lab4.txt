@@ -1,0 +1,11 @@
+Lab 4
+
+Part 1:
+2. To call them again during the recursive case
+3. Save the number stored in a0 (which was one of the inputs for the multiply function) to the stack so we are free to load the result of the function to the register
+4.
+multiply(5,3)   multiply(5,2)   multiply(5,1)   return 5    return 10   return 15
+                multiply(5,3)   multiple(5,2)   return 10   return 15
+                                multiply(5,3)   return 15
+
+
