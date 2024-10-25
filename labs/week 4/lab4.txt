@@ -5,7 +5,13 @@ Part 1:
 3. Save the number stored in a0 (which was one of the inputs for the multiply function) to the stack so we are free to load the result of the function to the register
 4.
 multiply(5,3)   multiply(5,2)   multiply(5,1)   return 5    return 10   return 15
-                multiply(5,3)   multiple(5,2)   return 10   return 15
-                                multiply(5,3)   return 15
+                multiply(5,2)   multiple(5,1)   return 5    return 10
+                                multiply(5,1)   return 5
 
-
+Part 3
+2.
+factorial(4)    factorial(3)    factorial(2)    factorial(1)    factorial(0)    return 1    return 1    return 2    return 6    return 24
+                factorial(3)    factorial(2)    factorial(1)    factorial(0)    return 1    return 1    return 2    return 6
+                                factorial(2)    factorial(1)    factorial(0)    return 1    return 1    return 2
+                                                factorial(1)    factorial(0)    return 1    return 1
+                                                                factorial(0)    return 1
