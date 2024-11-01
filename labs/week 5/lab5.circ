@@ -307,10 +307,10 @@
       <a name="facing" val="east"/>
       <a name="label" val="s3"/>
     </comp>
-    <comp lib="8" loc="(138,83)" name="Text">
+    <comp lib="8" loc="(135,80)" name="Text">
       <a name="text" val="Inputs"/>
     </comp>
-    <comp lib="8" loc="(142,405)" name="Text">
+    <comp lib="8" loc="(140,405)" name="Text">
       <a name="text" val="Outputs"/>
     </comp>
     <comp loc="(530,180)" name="FullAdder"/>
@@ -440,10 +440,7 @@
       <a name="label" val="c_0"/>
       <a name="output" val="true"/>
     </comp>
-    <comp lib="0" loc="(80,130)" name="Pin">
-      <a name="appearance" val="classic"/>
-      <a name="label" val="T"/>
-    </comp>
+    <comp lib="0" loc="(80,130)" name="Clock"/>
     <comp lib="4" loc="(150,210)" name="D Flip-Flop">
       <a name="appearance" val="logisim_evolution"/>
     </comp>
